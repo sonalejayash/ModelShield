@@ -15,6 +15,8 @@ def test_training_persists_artifact_and_metadata(tmp_path: Path) -> None:
     assert result.dataset == DATASET_NAME
     assert result.random_state == RANDOM_STATE
     assert len(result.artifact_sha256) == 64
+    assert result.artifact_signature
+    assert result.artifact_public_key
     assert isinstance(result.metrics, QualityMetrics)
     assert load_metadata(metadata_path) == result
 
@@ -37,3 +39,4 @@ def test_metadata_contains_release_fields(tmp_path: Path) -> None:
     assert payload["model_version"] == result.model_version
     assert payload["artifact_sha256"] == result.artifact_sha256
     assert set(payload["metrics"]) == {"accuracy", "precision", "recall", "f1"}
+    assert payload["source_revision"] == "local"

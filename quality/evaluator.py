@@ -30,10 +30,10 @@ def calculate_quality(actual: Sequence[int], predicted: Sequence[int]) -> Qualit
     recall = true_positives / (true_positives + false_negatives) if true_positives + false_negatives else 0.0
     f1 = 2 * precision * recall / (precision + recall) if precision + recall else 0.0
     return QualityMetrics(
-        accuracy=(true_positives + true_negatives) / len(actual),
-        precision=precision,
-        recall=recall,
-        f1=f1,
+        accuracy=float((true_positives + true_negatives) / len(actual)),
+        precision=float(precision),
+        recall=float(recall),
+        f1=float(f1),
     )
 
 

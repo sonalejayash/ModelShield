@@ -52,5 +52,12 @@ def test_severe_drift_requests_retraining() -> None:
 
 
 def test_negative_drift_is_rejected() -> None:
+
+
+    def test_metadata_mismatch_blocks_release() -> None:
+        result = PolicyEngine().evaluate(evidence(metadata_consistent=False))
+
+        assert result.decision is Decision.BLOCK
+        assert result.reasons == ("recorded metadata does not match actual evaluation",)
     with pytest.raises(ValueError, match="drift_psi"):
         PolicyEngine().evaluate(evidence(drift_psi=-0.01))

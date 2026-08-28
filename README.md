@@ -57,6 +57,14 @@ python scripts/evaluate_model.py artifacts/model-v1.json
 
 Training records the dataset, random seed, test split, quality metrics, model version, artifact path, and artifact SHA-256 in `artifacts/model-v1.json`.
 
+Run the complete release gate from a clean artifact directory:
+
+```bash
+python scripts/release.py --model-version v1
+```
+
+The command trains the model, signs and verifies the artifact, re-evaluates the persisted model, checks policy thresholds and security evidence, writes `artifacts/audit.jsonl`, and returns exit code `0` only for `PROMOTE`. `BLOCK` returns `1`; `RETRAIN` returns `2` and is never deployed automatically.
+
 Available endpoints:
 
 - `GET /health`: service health

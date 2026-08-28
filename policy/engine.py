@@ -2,7 +2,8 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+
+from quality.evaluator import QualityMetrics
 
 
 class Decision(StrEnum):
@@ -30,12 +31,13 @@ class ReleaseEvidence:
     model_version: str = ""
     artifact_path: str = ""
     artifact_sha256: str = ""
-    quality_metrics: Any = None
+    quality_metrics: QualityMetrics | None = None
     drift_status: str = ""
     high_vulnerabilities: int = 0
     dependency_scan_critical: int = 0
     container_scan_critical: int = 0
     evidence_references: tuple[str, ...] = ()
+    metadata_consistent: bool = True
 
 
 @dataclass(frozen=True)
@@ -83,6 +85,12 @@ class PolicyEngine:
 
         if security_failures:
             return PolicyResult(Decision.BLOCK, tuple(security_failures), self.policy_version)
+        if not evidence.metadata_consistent:
+            return PolicyResult(
+                Decision.BLOCK,
+                ("recorded metadata does not match actual evaluation",),
+                self.policy_version,
+            )
         if not evidence.quality_passed:
             return PolicyResult(
                 Decision.BLOCK,

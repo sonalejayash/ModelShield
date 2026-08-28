@@ -20,6 +20,16 @@ class ArtifactMetadata:
     builder_identity: str
 
 
+def sign_digest(digest: str, private_key: bytes) -> bytes:
+    """Sign an artifact digest with an Ed25519 private key."""
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
+    try:
+        return Ed25519PrivateKey.from_private_bytes(private_key).sign(digest.encode("ascii"))
+    except (ValueError, UnicodeEncodeError) as error:
+        raise ValueError("invalid digest or Ed25519 private key") from error
+
+
 def calculate_sha256(path: Path) -> str:
     """Return the SHA-256 digest of a file."""
     digest = sha256()

@@ -1,7 +1,7 @@
 """Orchestrate release evidence, policy evaluation, and audit recording."""
 
 import json
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from security.artifacts import (
     verify_signature,
 )
 from security.scans import load_scan_result
+from quality.evaluator import QualityMetrics
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,10 @@ class ReleaseRequest:
     drift_psi: float
     dependency_report: Path
     container_report: Path
+    release_id: str = ""
+    model_name: str = "modelshield-classifier"
+    quality_metrics: QualityMetrics | None = None
+    metadata_consistent: bool = True
 
 
 class ReleaseController:
@@ -64,11 +69,15 @@ class ReleaseController:
             model_version=request.model_version,
             artifact_path=str(request.artifact_path),
             artifact_sha256=actual_digest,
-            quality_metrics=None,
+            quality_metrics=request.quality_metrics,
             drift_status="CRITICAL" if request.drift_psi >= self.policy_engine.psi_critical else "PASS",
+            release_id=request.release_id or f"{request.model_version}-{self.policy_engine.policy_version}",
+            model_name=request.model_name,
             dependency_scan_critical=dependency_scan.critical,
             container_scan_critical=container_scan.critical,
+            high_vulnerabilities=dependency_scan.high + container_scan.high,
             evidence_references=(str(request.dependency_report), str(request.container_report)),
+            metadata_consistent=request.metadata_consistent,
         )
 
     def evaluate(self, request: ReleaseRequest) -> PolicyResult:
@@ -80,11 +89,22 @@ class ReleaseController:
         result = self.evaluate(request)
         record = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
+            "release_id": request.release_id or f"{request.model_version}-{result.policy_version}",
+            "model": request.model_name,
             "model_version": request.model_version,
             "policy_version": result.policy_version,
             "decision": result.decision.value,
             "reasons": list(result.reasons),
+            "evidence": _evidence_record(self.collect_evidence(request)),
+            "evidence_references": [str(request.dependency_report), str(request.container_report)],
         }
         with audit_path.open("a", encoding="utf-8") as audit_log:
             audit_log.write(json.dumps(record, sort_keys=True) + "\n")
         return result
+
+
+def _evidence_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    record = asdict(evidence)
+    if evidence.quality_metrics is not None:
+        record["quality_metrics"] = asdict(evidence.quality_metrics)
+    return record

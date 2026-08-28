@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from controller.release import ReleaseController, ReleaseRequest
 from policy.engine import Decision
 from security.artifacts import ArtifactMetadata, calculate_sha256
+from quality.evaluator import QualityMetrics
 
 
 def create_request(tmp_path: Path, *, critical: bool = False) -> ReleaseRequest:
@@ -35,6 +36,8 @@ def create_request(tmp_path: Path, *, critical: bool = False) -> ReleaseRequest:
         drift_psi=0.05,
         dependency_report=dependency,
         container_report=container,
+        release_id="release-test-1",
+        quality_metrics=QualityMetrics(0.99, 0.99, 0.99, 0.99),
     )
 
 
@@ -47,6 +50,11 @@ def test_promotes_and_appends_audit_record(tmp_path: Path) -> None:
     record = json.loads(audit.read_text(encoding="utf-8"))
     assert record["decision"] == "PROMOTE"
     assert record["model_version"] == "v1"
+    assert record["release_id"] == "release-test-1"
+    assert record["evidence"]["artifact_sha256"]
+    assert record["evidence"]["quality_metrics"]["f1"] == 0.99
+    assert record["evidence"]["release_id"] == "release-test-1"
+    assert record["evidence"]["model_name"] == "modelshield-classifier"
 
 
 def test_collects_canonical_artifact_and_scan_evidence(tmp_path: Path) -> None:

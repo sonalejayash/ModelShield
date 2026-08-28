@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -53,3 +54,53 @@ def test_severe_drift_requests_retraining(tmp_path: Path) -> None:
     result = ReleaseController().evaluate(release_request(tmp_path, drift_psi=0.25))
 
     assert result.decision is Decision.RETRAIN
+
+
+def test_invalid_signature_is_blocked(tmp_path: Path) -> None:
+    request = release_request(tmp_path)
+    invalid_metadata = replace(request.artifact_metadata, signature=b"invalid")
+
+    result = ReleaseController().evaluate(replace(request, artifact_metadata=invalid_metadata))
+
+    assert result.decision is Decision.BLOCK
+    assert "signature" in result.reasons[0]
+
+
+def test_invalid_provenance_is_blocked(tmp_path: Path) -> None:
+    request = release_request(tmp_path)
+    invalid_metadata = replace(request.artifact_metadata, source_revision=" ")
+
+    result = ReleaseController().evaluate(replace(request, artifact_metadata=invalid_metadata))
+
+    assert result.decision is Decision.BLOCK
+    assert "provenance" in result.reasons[0]
+
+
+def test_artifact_hash_mismatch_is_blocked(tmp_path: Path) -> None:
+    request = release_request(tmp_path)
+    invalid_metadata = replace(request.artifact_metadata, expected_sha256="0" * 64)
+
+    result = ReleaseController().evaluate(replace(request, artifact_metadata=invalid_metadata))
+
+    assert result.decision is Decision.BLOCK
+    assert "integrity" in result.reasons[0]
+
+
+def test_security_failure_wins_over_severe_drift(tmp_path: Path) -> None:
+    request = release_request(tmp_path, drift_psi=0.40)
+    dependency = json.loads(request.dependency_report.read_text(encoding="utf-8"))
+    dependency["Results"] = [{"Vulnerabilities": [{"Severity": "CRITICAL"}]}]
+    request.dependency_report.write_text(json.dumps(dependency), encoding="utf-8")
+
+    result = ReleaseController().evaluate(request)
+
+    assert result.decision is Decision.BLOCK
+
+
+def test_metadata_mismatch_is_blocked(tmp_path: Path) -> None:
+    request = replace(release_request(tmp_path), metadata_consistent=False)
+
+    result = ReleaseController().evaluate(request)
+
+    assert result.decision is Decision.BLOCK
+    assert "metadata" in result.reasons[0]
