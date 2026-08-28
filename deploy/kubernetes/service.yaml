@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: modelshield
+  labels:
+    app.kubernetes.io/name: modelshield
+spec:
+  selector:
+    app.kubernetes.io/name: modelshield
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+  type: ClusterIP
