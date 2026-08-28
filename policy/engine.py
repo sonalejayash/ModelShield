@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from enum import StrEnum
+from typing import Any
 
 
 class Decision(StrEnum):
@@ -24,6 +25,17 @@ class ReleaseEvidence:
     provenance_valid: bool
     dependency_scan_passed: bool
     container_scan_passed: bool
+    release_id: str = ""
+    model_name: str = ""
+    model_version: str = ""
+    artifact_path: str = ""
+    artifact_sha256: str = ""
+    quality_metrics: Any = None
+    drift_status: str = ""
+    high_vulnerabilities: int = 0
+    dependency_scan_critical: int = 0
+    container_scan_critical: int = 0
+    evidence_references: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

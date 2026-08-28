@@ -1,7 +1,7 @@
 """Orchestrate release evidence, policy evaluation, and audit recording."""
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -35,8 +35,8 @@ class ReleaseController:
     def __init__(self, policy_engine: PolicyEngine | None = None) -> None:
         self.policy_engine = policy_engine or PolicyEngine()
 
-    def evaluate(self, request: ReleaseRequest) -> PolicyResult:
-        """Evaluate a candidate and return its deterministic policy result."""
+    def collect_evidence(self, request: ReleaseRequest) -> ReleaseEvidence:
+        """Collect the canonical evidence used to evaluate a candidate."""
         if not request.model_version.strip():
             raise ValueError("model_version must not be empty")
         dependency_scan = load_scan_result(request.dependency_report, scan_type="dependency")
@@ -52,7 +52,28 @@ class ReleaseController:
             dependency_scan_passed=dependency_scan.passed,
             container_scan_passed=container_scan.passed,
         )
-        return self.policy_engine.evaluate(evidence)
+        return ReleaseEvidence(
+            quality_passed=evidence.quality_passed,
+            drift_psi=evidence.drift_psi,
+            critical_vulnerabilities=evidence.critical_vulnerabilities,
+            artifact_integrity_valid=evidence.artifact_integrity_valid,
+            artifact_signature_valid=evidence.artifact_signature_valid,
+            provenance_valid=evidence.provenance_valid,
+            dependency_scan_passed=evidence.dependency_scan_passed,
+            container_scan_passed=evidence.container_scan_passed,
+            model_version=request.model_version,
+            artifact_path=str(request.artifact_path),
+            artifact_sha256=actual_digest,
+            quality_metrics=None,
+            drift_status="CRITICAL" if request.drift_psi >= self.policy_engine.psi_critical else "PASS",
+            dependency_scan_critical=dependency_scan.critical,
+            container_scan_critical=container_scan.critical,
+            evidence_references=(str(request.dependency_report), str(request.container_report)),
+        )
+
+    def evaluate(self, request: ReleaseRequest) -> PolicyResult:
+        """Evaluate a candidate and return its deterministic policy result."""
+        return self.policy_engine.evaluate(self.collect_evidence(request))
 
     def evaluate_and_audit(self, request: ReleaseRequest, audit_path: Path) -> PolicyResult:
         """Evaluate a release and append a structured audit record."""

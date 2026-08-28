@@ -49,6 +49,17 @@ def test_promotes_and_appends_audit_record(tmp_path: Path) -> None:
     assert record["model_version"] == "v1"
 
 
+def test_collects_canonical_artifact_and_scan_evidence(tmp_path: Path) -> None:
+    request = create_request(tmp_path)
+
+    evidence = ReleaseController().collect_evidence(request)
+
+    assert evidence.model_version == "v1"
+    assert len(evidence.artifact_sha256) == 64
+    assert evidence.dependency_scan_critical == 0
+    assert str(request.dependency_report) in evidence.evidence_references
+
+
 def test_critical_scan_blocks_release(tmp_path: Path) -> None:
     result = ReleaseController().evaluate(create_request(tmp_path, critical=True))
 
