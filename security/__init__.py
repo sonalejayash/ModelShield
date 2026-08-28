@@ -3,6 +3,8 @@
 from .artifacts import (
     ArtifactMetadata,
     calculate_sha256,
+    verify_integrity,
+    verify_signature,
     verify_artifact,
     verify_provenance,
 )
@@ -13,6 +15,8 @@ __all__ = [
     "ScanResult",
     "calculate_sha256",
     "load_scan_result",
+    "verify_integrity",
+    "verify_signature",
     "verify_artifact",
     "verify_provenance",
 ]

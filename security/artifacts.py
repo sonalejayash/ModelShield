@@ -35,8 +35,18 @@ def calculate_sha256(path: Path) -> str:
 def verify_artifact(path: Path, metadata: ArtifactMetadata) -> bool:
     """Verify the artifact digest and Ed25519 signature over that digest."""
     actual_digest = calculate_sha256(path)
-    if actual_digest.lower() != metadata.expected_sha256.lower():
+    if not verify_integrity(actual_digest, metadata.expected_sha256):
         return False
+    return verify_signature(actual_digest, metadata)
+
+
+def verify_integrity(actual_digest: str, expected_digest: str) -> bool:
+    """Compare an observed digest with the expected artifact digest."""
+    return actual_digest.lower() == expected_digest.lower()
+
+
+def verify_signature(actual_digest: str, metadata: ArtifactMetadata) -> bool:
+    """Verify an Ed25519 signature over an observed artifact digest."""
     try:
         Ed25519PublicKey.from_public_bytes(metadata.public_key).verify(
             metadata.signature,

@@ -1,0 +1,69 @@
+"""Orchestrate release evidence, policy evaluation, and audit recording."""
+
+import json
+from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+from policy.engine import PolicyEngine, PolicyResult, ReleaseEvidence
+from security.artifacts import (
+    ArtifactMetadata,
+    calculate_sha256,
+    verify_integrity,
+    verify_provenance,
+    verify_signature,
+)
+from security.scans import load_scan_result
+
+
+@dataclass(frozen=True)
+class ReleaseRequest:
+    """Inputs required to evaluate one model release candidate."""
+
+    model_version: str
+    artifact_path: Path
+    artifact_metadata: ArtifactMetadata
+    quality_passed: bool
+    drift_psi: float
+    dependency_report: Path
+    container_report: Path
+
+
+class ReleaseController:
+    """Collect release evidence and delegate the final decision to policy."""
+
+    def __init__(self, policy_engine: PolicyEngine | None = None) -> None:
+        self.policy_engine = policy_engine or PolicyEngine()
+
+    def evaluate(self, request: ReleaseRequest) -> PolicyResult:
+        """Evaluate a candidate and return its deterministic policy result."""
+        if not request.model_version.strip():
+            raise ValueError("model_version must not be empty")
+        dependency_scan = load_scan_result(request.dependency_report, scan_type="dependency")
+        container_scan = load_scan_result(request.container_report, scan_type="container")
+        actual_digest = calculate_sha256(request.artifact_path)
+        evidence = ReleaseEvidence(
+            quality_passed=request.quality_passed,
+            drift_psi=request.drift_psi,
+            critical_vulnerabilities=dependency_scan.critical + container_scan.critical,
+            artifact_integrity_valid=verify_integrity(actual_digest, request.artifact_metadata.expected_sha256),
+            artifact_signature_valid=verify_signature(actual_digest, request.artifact_metadata),
+            provenance_valid=verify_provenance(request.artifact_metadata),
+            dependency_scan_passed=dependency_scan.passed,
+            container_scan_passed=container_scan.passed,
+        )
+        return self.policy_engine.evaluate(evidence)
+
+    def evaluate_and_audit(self, request: ReleaseRequest, audit_path: Path) -> PolicyResult:
+        """Evaluate a release and append a structured audit record."""
+        result = self.evaluate(request)
+        record = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "model_version": request.model_version,
+            "policy_version": result.policy_version,
+            "decision": result.decision.value,
+            "reasons": list(result.reasons),
+        }
+        with audit_path.open("a", encoding="utf-8") as audit_log:
+            audit_log.write(json.dumps(record, sort_keys=True) + "\n")
+        return result
