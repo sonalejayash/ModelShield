@@ -8,14 +8,16 @@ ModelShield is a policy-driven secure ML release control plane. It evaluates mod
 
 Deterministic policy enforcement is the production safety boundary. Any future AI Release Intelligence layer will investigate evidence and explain decisions, but it will never override hard policy results.
 
-## Phase 0 status
+## Current status
 
-This repository contains the verified project foundation. Application implementation begins in Phase 1 after the structure, policy vocabulary, lifecycle, and threat model are reviewed.
+Phase 0 and the Phase 1 V1 implementation are complete. The repository currently contains a deterministic release-control workflow, a secure local model service, Kubernetes packaging, runtime rollback logic, and CI security gates.
 
-Verify the baseline on Windows, macOS, or Linux:
+Verify locally on Windows, macOS, or Linux:
 
-```text
+```bash
+python -m pip install -e ".[dev]"
 python scripts/verify_phase_0.py
+python -m pytest -q
 ```
 
 ## Golden path
@@ -36,13 +38,63 @@ Git commit -> evaluate -> scan -> inspect -> hash/sign -> verify provenance -> p
 - Deterministic rollback
 - Unit, integration, scenario, and security tests
 
-Deferred work is documented in the project specification: MLflow, Terraform, Grafana polish, OPA/Conftest, Scorecard, and the AI intelligence layer.
+The current runtime model is a deterministic logistic baseline for local serving. The release-control and security workflow is the product under test; a trained scikit-learn artifact will be added as a later model workflow.
+
+## Run locally
+
+Start the API:
+
+```bash
+uvicorn api.app:app --reload
+```
+
+Available endpoints:
+
+- `GET /health`: service health
+- `POST /v1/predict`: local model prediction
+- `POST /v1/releases/evaluate`: deterministic release decision
+- `GET /metrics`: Prometheus metrics
+
+Build and run the container:
+
+```bash
+docker build --tag modelshield:local .
+docker run --publish 8000:8000 modelshield:local
+```
+
+Deploy the local image to Kubernetes:
+
+```bash
+kubectl apply -f deploy/kubernetes/
+```
+
+The Kubernetes deployment uses two replicas, health probes, resource limits, a non-root security context, a read-only root filesystem, dropped capabilities, and a restrictive NetworkPolicy.
+
+## Roadmap
+
+### Phase 1.5: Platform improvements
+
+- MLflow model and release tracking
+- Terraform infrastructure modules
+- Grafana dashboards
+- SBOM generation and publication
+- OPA/Conftest policy checks
+- OpenSSF Scorecard integration
+
+### Phase 2: Release intelligence
+
+- Read-only AI evidence investigator
+- Historical release intelligence
+- Structured explanations with cited evidence
+
+The AI layer will remain advisory. It will never approve, deploy, override policy, or modify access controls.
 
 ## Repository map
 
 - `docs/`: architecture, threat model, and lifecycle contracts
 - `policies/`: version-controlled policy inputs
 - `scripts/`: repository and phase verification utilities
+- `deploy/kubernetes/`: secure Deployment, Service, and NetworkPolicy manifests
 - `tests/`: unit, integration, scenario, and security test suites
 
 ## Development rule
