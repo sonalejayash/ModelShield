@@ -15,13 +15,16 @@ dependencies = [
 dev = [
 	"pytest>=8.0.0,<9.0.0",
 ]
+platform = [
+	"mlflow>=2.20.0,<3.0.0",
+]
 
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["api", "controller", "model", "policy", "quality", "security"]
+packages = ["api", "controller", "model", "policy", "quality", "security", "tracking"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
