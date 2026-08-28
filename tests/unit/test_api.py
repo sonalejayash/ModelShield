@@ -50,3 +50,17 @@ def test_evaluate_endpoint_rejects_unknown_fields() -> None:
     response = client.post("/v1/releases/evaluate", json=payload)
 
     assert response.status_code == 422
+
+
+def test_prediction_endpoint_returns_prediction_and_metrics() -> None:
+    response = client.post("/v1/predict", json={"features": [0.0, 1.0]})
+
+    assert response.status_code == 200
+    assert response.json()["label"] == 1
+    assert "modelshield_prediction_requests_total" in client.get("/metrics").text
+
+
+def test_prediction_endpoint_rejects_empty_features() -> None:
+    response = client.post("/v1/predict", json={"features": []})
+
+    assert response.status_code == 422
