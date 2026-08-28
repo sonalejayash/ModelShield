@@ -16,6 +16,7 @@ COPY model/ model/
 COPY policy/ policy/
 COPY quality/ quality/
 COPY security/ security/
+COPY tracking/ tracking/
 
 RUN pip install --no-cache-dir --disable-pip-version-check . \
     && pip uninstall --yes setuptools wheel \
