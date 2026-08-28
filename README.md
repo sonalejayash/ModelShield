@@ -38,7 +38,7 @@ Git commit -> evaluate -> scan -> inspect -> hash/sign -> verify provenance -> p
 - Deterministic rollback
 - Unit, integration, scenario, and security tests
 
-The current runtime model is a deterministic logistic baseline for local serving. The release-control and security workflow is the product under test; a trained scikit-learn artifact will be added as a later model workflow.
+The training workflow uses the built-in scikit-learn breast-cancer dataset and a seeded, scaled logistic-regression pipeline. Generated artifacts and metadata are written to the ignored `artifacts/` directory.
 
 ## Run locally
 
@@ -47,6 +47,15 @@ Start the API:
 ```bash
 uvicorn api.app:app --reload
 ```
+
+Train and evaluate the reproducible model workflow:
+
+```bash
+python scripts/train_model.py --output-dir artifacts --model-version v1
+python scripts/evaluate_model.py artifacts/model-v1.json
+```
+
+Training records the dataset, random seed, test split, quality metrics, model version, artifact path, and artifact SHA-256 in `artifacts/model-v1.json`.
 
 Available endpoints:
 
