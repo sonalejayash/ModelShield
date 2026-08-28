@@ -1,0 +1,11 @@
+policy_version: policy-v1
+rollback:
+  observation_window_seconds: 60
+  evaluation_interval_seconds: 15
+  consecutive_failures: 2
+  cooldown_seconds: 300
+  maximum_automatic_attempts: 1
+security_baseline:
+  run_as_non_root: true
+  allow_privilege_escalation: false
+  read_only_root_filesystem: true

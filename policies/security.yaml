@@ -1,0 +1,7 @@
+policy_version: policy-v1
+security:
+  critical_vulnerabilities: 0
+  require_artifact_signature: true
+  require_provenance: true
+  require_dependency_scan: true
+  require_container_scan: true
