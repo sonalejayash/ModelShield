@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install project
-        run: python -m pip install --upgrade pip && python -m pip install -e .
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[dev]"
       - name: Verify repository
         run: python scripts/verify_phase_0.py
       - name: Run tests

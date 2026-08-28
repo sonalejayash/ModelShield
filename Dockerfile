@@ -3,7 +3,10 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN useradd --create-home --uid 10001 modelshield
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 10001 modelshield
 WORKDIR /app
 
 COPY pyproject.toml README.md ./
@@ -15,6 +18,7 @@ COPY quality/ quality/
 COPY security/ security/
 
 RUN pip install --no-cache-dir --disable-pip-version-check . \
+    && pip uninstall --yes setuptools wheel \
     && chown -R modelshield:modelshield /app
 
 USER 10001
