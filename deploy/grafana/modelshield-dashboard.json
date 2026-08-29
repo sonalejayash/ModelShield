@@ -1,0 +1,17 @@
+{
+  "title": "ModelShield Runtime",
+  "schemaVersion": 39,
+  "tags": ["modelshield", "mlops", "security"],
+  "timezone": "browser",
+  "refresh": "15s",
+  "panels": [
+    {"id": 1, "type": "timeseries", "title": "Request Rate", "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}, "targets": [{"expr": "rate(modelshield_predictions_total[5m])", "legendFormat": "predictions/s"}]},
+    {"id": 2, "type": "timeseries", "title": "Request Latency", "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}, "targets": [{"expr": "histogram_quantile(0.95, rate(modelshield_prediction_latency_seconds_bucket[5m]))", "legendFormat": "p95"}]},
+    {"id": 3, "type": "timeseries", "title": "Request Errors", "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}, "targets": [{"expr": "rate(modelshield_prediction_errors_total[5m])", "legendFormat": "errors/s"}]},
+    {"id": 4, "type": "stat", "title": "Model Version", "gridPos": {"h": 8, "w": 8, "x": 8, "y": 8}, "targets": [{"expr": "modelshield_model_version_info", "legendFormat": "{{version}}"}]},
+    {"id": 5, "type": "timeseries", "title": "Model Predictions", "gridPos": {"h": 8, "w": 8, "x": 16, "y": 8}, "targets": [{"expr": "sum by (label) (rate(modelshield_predictions_total[5m]))", "legendFormat": "label {{label}}"}]},
+    {"id": 6, "type": "timeseries", "title": "Model Drift", "gridPos": {"h": 8, "w": 8, "x": 0, "y": 16}, "targets": [{"expr": "modelshield_drift_psi", "legendFormat": "PSI"}]},
+    {"id": 7, "type": "timeseries", "title": "Release Decisions", "gridPos": {"h": 8, "w": 8, "x": 8, "y": 16}, "targets": [{"expr": "sum by (decision) (rate(modelshield_release_decisions_total[5m]))", "legendFormat": "{{decision}}"}]},
+    {"id": 8, "type": "timeseries", "title": "Rollback Events", "gridPos": {"h": 8, "w": 8, "x": 16, "y": 16}, "targets": [{"expr": "sum by (event) (rate(modelshield_rollback_events_total[5m]))", "legendFormat": "{{event}}"}]}
+  ]
+}

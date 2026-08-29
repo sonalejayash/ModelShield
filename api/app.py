@@ -3,9 +3,18 @@
 from fastapi import FastAPI
 from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, ConfigDict, Field
-from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from model.service import ModelService
+from observability.metrics import (
+    model_drift_psi,
+    model_predictions,
+    model_version,
+    prediction_requests,
+    prediction_errors,
+    prediction_latency,
+    release_decisions,
+)
 from policy.engine import PolicyEngine, ReleaseEvidence
 
 
@@ -50,8 +59,7 @@ class PredictionResponse(BaseModel):
 app = FastAPI(title="ModelShield", version="0.1.0")
 policy_engine = PolicyEngine()
 model_service = ModelService()
-prediction_requests = Counter("modelshield_prediction_requests_total", "Prediction requests")
-prediction_latency = Histogram("modelshield_prediction_latency_seconds", "Prediction latency")
+model_version.labels(version="v1").set(1)
 
 
 @app.get("/health")
@@ -64,6 +72,8 @@ def health() -> dict[str, str]:
 def evaluate_release(request: EvidenceRequest) -> EvaluationResponse:
     """Evaluate structured release evidence using the deterministic policy engine."""
     result = policy_engine.evaluate(ReleaseEvidence(**request.model_dump()))
+    release_decisions.labels(decision=result.decision.value).inc()
+    model_drift_psi.set(request.drift_psi)
     return EvaluationResponse(
         decision=result.decision.value,
         reasons=list(result.reasons),
@@ -74,9 +84,14 @@ def evaluate_release(request: EvidenceRequest) -> EvaluationResponse:
 @app.post("/v1/predict", response_model=PredictionResponse)
 def predict(request: PredictionRequest) -> PredictionResponse:
     """Score a feature vector and record serving metrics."""
-    with prediction_latency.time():
-        result = model_service.predict(request.features)
+    try:
+        with prediction_latency.time():
+            result = model_service.predict(request.features)
+    except ValueError:
+        prediction_errors.inc()
+        raise
     prediction_requests.inc()
+    model_predictions.labels(label=str(result.label)).inc()
     return PredictionResponse(label=result.label, probability=result.probability)
 
 

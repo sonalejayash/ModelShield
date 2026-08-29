@@ -3,6 +3,8 @@
 from collections.abc import Callable
 from enum import StrEnum
 
+from observability.metrics import rollback_events
+
 
 class RuntimeState(StrEnum):
     """States in the runtime rollback lifecycle."""
@@ -77,6 +79,8 @@ class RollbackStateMachine:
         self._last_rollback = timestamp
         if action():
             self.state = RuntimeState.RECOVERED
+            rollback_events.labels(event="recovered").inc()
         else:
             self.state = RuntimeState.ESCALATE
+            rollback_events.labels(event="escalated").inc()
         return self.state
