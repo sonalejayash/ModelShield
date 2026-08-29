@@ -91,12 +91,12 @@ The Kubernetes deployment uses two replicas, health probes, resource limits, a n
 
 ### Phase 1.5: Platform improvements
 
-- MLflow model and release tracking
-- Terraform infrastructure modules
-- Grafana dashboards
-- SBOM generation and publication
-- OPA/Conftest policy checks
-- OpenSSF Scorecard integration
+- MLflow model and release tracking: implemented
+- Terraform infrastructure module: implemented
+- Grafana operational dashboard: implemented
+- CycloneDX SBOM generation and publication: implemented
+- OPA/Conftest Kubernetes policy checks: implemented
+- OpenSSF Scorecard workflow: implemented
 
 ### Phase 2: Release intelligence
 
