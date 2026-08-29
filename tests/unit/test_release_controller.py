@@ -55,6 +55,8 @@ def test_promotes_and_appends_audit_record(tmp_path: Path) -> None:
     assert record["evidence"]["quality_metrics"]["f1"] == 0.99
     assert record["evidence"]["release_id"] == "release-test-1"
     assert record["evidence"]["model_name"] == "modelshield-classifier"
+    assert record["investigation"]["advisory_only"] is True
+    assert record["investigation"]["decision"] == "PROMOTE"
 
 
 def test_collects_canonical_artifact_and_scan_evidence(tmp_path: Path) -> None:

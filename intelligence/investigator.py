@@ -32,6 +32,24 @@ class ReleaseInvestigator:
     def investigate(self, evidence: ReleaseEvidence, result: PolicyResult) -> InvestigationReport:
         """Produce deterministic findings and citations for an existing decision."""
         findings: list[Finding] = []
+        missing_fields = [
+            field
+            for field, value in (
+                ("release_id", evidence.release_id),
+                ("model_name", evidence.model_name),
+                ("model_version", evidence.model_version),
+                ("artifact_path", evidence.artifact_path),
+                ("artifact_sha256", evidence.artifact_sha256),
+            )
+            if not value
+        ]
+        if missing_fields:
+            findings.append(
+                Finding(
+                    message="Required release evidence is missing.",
+                    evidence_fields=missing_fields,
+                )
+            )
         if evidence.critical_vulnerabilities:
             findings.append(
                 Finding(
@@ -65,6 +83,20 @@ class ReleaseInvestigator:
                 Finding(
                     message="Recorded metadata does not match the actual evaluation.",
                     evidence_fields=["metadata_consistent", "quality_metrics"],
+                )
+            )
+        blocking_evidence = (
+            evidence.critical_vulnerabilities > 0
+            or not evidence.artifact_integrity_valid
+            or not evidence.artifact_signature_valid
+            or not evidence.provenance_valid
+            or not evidence.metadata_consistent
+        )
+        if result.decision is Decision.PROMOTE and blocking_evidence:
+            findings.append(
+                Finding(
+                    message="The supplied decision contradicts a blocking evidence field.",
+                    evidence_fields=["decision", "blocking_evidence"],
                 )
             )
         if evidence.drift_psi >= 0.20:

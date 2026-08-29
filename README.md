@@ -68,6 +68,7 @@ The command uses the built-in scikit-learn breast-cancer dataset, a seeded train
 - Security precedence over quality and drift decisions
 - `PROMOTE`, `BLOCK`, and `RETRAIN` outcomes
 - Complete append-only JSONL audit records
+- Read-only investigation included in audit records
 - Evidence references for scan reports
 - Invalid signature, provenance, hash, and metadata rejection
 
@@ -193,7 +194,7 @@ flowchart TD
 
 ## Roadmap
 
-Phase 2 has started with a read-only investigator contract. Its output is structured, evidence-cited, schema-validated, and advisory. A future model-backed investigator will not have unrestricted shell or Kubernetes access and will not be part of the final release authority.
+Phase 2 has started with a read-only investigator contract integrated into audit records. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. A future model-backed investigator will not have unrestricted shell or Kubernetes access and will not be part of the final release authority.
 
 ## Development rule
 

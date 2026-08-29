@@ -15,6 +15,7 @@ from security.artifacts import (
 )
 from security.scans import load_scan_result
 from quality.evaluator import QualityMetrics
+from intelligence.investigator import ReleaseInvestigator
 
 
 @dataclass(frozen=True)
@@ -37,8 +38,13 @@ class ReleaseRequest:
 class ReleaseController:
     """Collect release evidence and delegate the final decision to policy."""
 
-    def __init__(self, policy_engine: PolicyEngine | None = None) -> None:
+    def __init__(
+        self,
+        policy_engine: PolicyEngine | None = None,
+        investigator: ReleaseInvestigator | None = None,
+    ) -> None:
         self.policy_engine = policy_engine or PolicyEngine()
+        self.investigator = investigator or ReleaseInvestigator()
 
     def collect_evidence(self, request: ReleaseRequest) -> ReleaseEvidence:
         """Collect the canonical evidence used to evaluate a candidate."""
@@ -87,6 +93,8 @@ class ReleaseController:
     def evaluate_and_audit(self, request: ReleaseRequest, audit_path: Path) -> PolicyResult:
         """Evaluate a release and append a structured audit record."""
         result = self.evaluate(request)
+        evidence = self.collect_evidence(request)
+        investigation = self.investigator.investigate(evidence, result)
         record = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "release_id": request.release_id or f"{request.model_version}-{result.policy_version}",
@@ -95,7 +103,8 @@ class ReleaseController:
             "policy_version": result.policy_version,
             "decision": result.decision.value,
             "reasons": list(result.reasons),
-            "evidence": _evidence_record(self.collect_evidence(request)),
+            "evidence": _evidence_record(evidence),
+            "investigation": investigation.model_dump(mode="json"),
             "evidence_references": [str(request.dependency_report), str(request.container_report)],
         }
         with audit_path.open("a", encoding="utf-8") as audit_log:
