@@ -15,7 +15,7 @@ The deterministic policy engine is the final authority. Future AI release intell
 | Phase 0: foundation | Complete | Repository verifier, architecture, lifecycle, and threat model |
 | Phase 1: V1 golden path | Complete | Reproducible release command and `52` passing tests |
 | Phase 1.5: platform improvements | Complete | MLflow, Terraform, Grafana, SBOM, Conftest, and Scorecard integrations |
-| Phase 2: release intelligence | Not started | Deliberately deferred until deterministic controls are stable |
+| Phase 2: release intelligence | Started | Read-only, deterministic, schema-validated investigator contract |
 
 ## Golden path
 
@@ -193,7 +193,7 @@ flowchart TD
 
 ## Roadmap
 
-Phase 2 will add read-only AI release intelligence only after further deterministic V1 evidence is established. Its output will be structured, evidence-cited, schema-validated, and advisory. It will not have unrestricted shell or Kubernetes access and will not be part of the final release authority.
+Phase 2 has started with a read-only investigator contract. Its output is structured, evidence-cited, schema-validated, and advisory. A future model-backed investigator will not have unrestricted shell or Kubernetes access and will not be part of the final release authority.
 
 ## Development rule
 
