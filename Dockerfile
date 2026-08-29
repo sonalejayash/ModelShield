@@ -13,6 +13,7 @@ COPY pyproject.toml README.md ./
 COPY api/ api/
 COPY controller/ controller/
 COPY model/ model/
+COPY observability/ observability/
 COPY policy/ policy/
 COPY quality/ quality/
 COPY security/ security/
