@@ -13,3 +13,6 @@ build/
 coverage.xml
 htmlcov/
 artifacts/
+.terraform/
+*.tfstate
+*.tfstate.*
