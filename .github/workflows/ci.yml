@@ -45,3 +45,14 @@ jobs:
           exit-code: "1"
           ignore-unfixed: true
           severity: CRITICAL,HIGH
+
+  terraform:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.5"
+      - name: Validate Terraform module
+        working-directory: deploy/terraform
+        run: terraform init -backend=false && terraform fmt -check && terraform validate
