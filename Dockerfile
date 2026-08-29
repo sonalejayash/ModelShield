@@ -12,6 +12,7 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY api/ api/
 COPY controller/ controller/
+COPY intelligence/ intelligence/
 COPY model/ model/
 COPY observability/ observability/
 COPY policy/ policy/
