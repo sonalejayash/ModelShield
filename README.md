@@ -194,7 +194,7 @@ flowchart TD
 
 ## Roadmap
 
-Phase 2 has started with a read-only investigator contract integrated into audit records and an optional model-backed explanation adapter. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. The adapter receives structured evidence only and must match the deterministic decision. It has no unrestricted shell or Kubernetes access and is not part of the final release authority.
+Phase 2 has started with a read-only investigator contract integrated into audit records and an optional model-backed explanation adapter. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
 
 ## Development rule
 
