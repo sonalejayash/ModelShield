@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from model.training import DATASET_NAME, RANDOM_STATE, load_metadata, train_model
@@ -39,4 +40,5 @@ def test_metadata_contains_release_fields(tmp_path: Path) -> None:
     assert payload["model_version"] == result.model_version
     assert payload["artifact_sha256"] == result.artifact_sha256
     assert set(payload["metrics"]) == {"accuracy", "precision", "recall", "f1"}
-    assert payload["source_revision"] == "local"
+    expected_revision = os.environ.get("GITHUB_SHA", "local")
+    assert payload["source_revision"] == expected_revision

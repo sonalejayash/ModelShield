@@ -55,7 +55,7 @@ python scripts/train_model.py --output-dir artifacts --model-version v1
 python scripts/evaluate_model.py artifacts/model-v1.json
 ```
 
-Training records the dataset, random seed, test split, quality metrics, model version, artifact path, and artifact SHA-256 in `artifacts/model-v1.json`.
+Training records the dataset, random seed, test split, quality metrics, model version, artifact path, artifact SHA-256, signature, and provenance in `artifacts/model-v1.json`. Local training records `source_revision` as `local`; GitHub Actions records the triggering commit SHA through `GITHUB_SHA`.
 
 Run the complete release gate from a clean artifact directory:
 
