@@ -111,6 +111,7 @@ python scripts/train_model.py --output-dir artifacts --model-version v1
 python scripts/evaluate_model.py artifacts/model-v1.json
 python scripts/release.py --model-version v1
 python scripts/investigate_release.py artifacts/audit.jsonl
+python scripts/analyze_history.py artifacts/audit.jsonl
 ```
 
 Training metadata includes the dataset, random seed, test split, quality metrics, model version, artifact path, SHA-256 digest, signature, public key, source revision, and builder identity. Local runs use `source_revision=local`; GitHub Actions records `GITHUB_SHA`.
@@ -195,7 +196,7 @@ flowchart TD
 
 ## Roadmap
 
-Phase 2 has started with a read-only investigator contract integrated into audit records and covered by end-to-end release scenarios. `scripts/investigate_release.py` can regenerate an advisory investigation report from an existing audit log. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
+Phase 2 has started with a read-only investigator contract integrated into audit records and covered by end-to-end release scenarios. `scripts/investigate_release.py` can regenerate an advisory investigation report from an existing audit log, and `scripts/analyze_history.py` summarizes historical release decisions, recurring reasons, quality trends, and drift trends. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
 
 ## Development rule
 

@@ -179,3 +179,35 @@ def test_investigation_cli_reads_existing_audit(tmp_path: Path) -> None:
     assert report["decision"] == "PROMOTE"
     assert report["advisory_only"] is True
     assert report["findings"][0]["evidence_fields"]
+
+
+def test_history_cli_summarizes_existing_audit(tmp_path: Path) -> None:
+    audit = tmp_path / "audit.jsonl"
+    release = subprocess.run(
+        [
+            sys.executable,
+            "scripts/release.py",
+            "--model-version",
+            "history-v1",
+            "--output-dir",
+            str(tmp_path),
+            "--audit-path",
+            str(audit),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    history = subprocess.run(
+        [sys.executable, "scripts/analyze_history.py", str(audit)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert release.returncode == 0, release.stderr
+    assert history.returncode == 0, history.stderr
+    report = json.loads(history.stdout)
+    assert report["total_releases"] == 1
+    assert report["decision_counts"] == {"PROMOTE": 1}
+    assert report["advisory_only"] is True
