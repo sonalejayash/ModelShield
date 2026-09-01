@@ -211,3 +211,24 @@ def test_history_cli_summarizes_existing_audit(tmp_path: Path) -> None:
     assert report["total_releases"] == 1
     assert report["decision_counts"] == {"PROMOTE": 1}
     assert report["advisory_only"] is True
+
+
+def test_demo_cli_runs_release_investigation_and_history(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/demo.py",
+            "--model-version",
+            "demo-v1",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Release: PROMOTED" in result.stdout
+    assert "Demo complete" in result.stdout
+    assert (tmp_path / "audit.jsonl").is_file()
