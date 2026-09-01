@@ -235,6 +235,12 @@ Conftest validation:
 conftest test deploy/kubernetes/deployment.yaml --policy policies/rego
 ```
 
+Grafana dashboard:
+
+- Import [deploy/grafana/modelshield-dashboard.json](deploy/grafana/modelshield-dashboard.json), or provision it with Grafana.
+- Provision [deploy/grafana/datasource-prometheus.yml](deploy/grafana/datasource-prometheus.yml) when running Grafana with Prometheus.
+- Ensure Prometheus scrapes the ModelShield `/metrics` endpoint before expecting live graphs.
+
 The CI workflow runs Python tests, repository verification, Docker build, SBOM generation, Trivy scanning, Terraform validation, and Conftest policy checks. The Scorecard workflow runs separately on pushes, weekly, and manually.
 
 Final local verification commands:
