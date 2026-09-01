@@ -84,6 +84,13 @@ Demo complete
 
 ## Portfolio Scenario Evidence
 
+| Evidence | Screenshot |
+|---|---|
+| Golden-path release demo | ![Golden-path release demo](assets/release-demo.png) |
+| BLOCK release intelligence | ![BLOCK release intelligence](assets/block-investigation.png) |
+| Verification and security checks | ![Verification and security checks](assets/verification-summary.png) |
+| Grafana dashboard preview | ![Grafana dashboard preview](assets/grafana-dashboard-preview.png) |
+
 ### PROMOTE
 
 ```text

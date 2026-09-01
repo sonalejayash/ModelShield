@@ -160,6 +160,15 @@ Demo complete
 
 See [docs/portfolio-evidence.md](docs/portfolio-evidence.md) for the latest captured terminal evidence.
 
+## Evidence Screenshots
+
+| Evidence | Screenshot |
+|---|---|
+| Golden-path release demo | ![Golden-path release demo](docs/assets/release-demo.png) |
+| BLOCK release intelligence | ![BLOCK release intelligence](docs/assets/block-investigation.png) |
+| Verification and security checks | ![Verification and security checks](docs/assets/verification-summary.png) |
+| Grafana dashboard preview | ![Grafana dashboard preview](docs/assets/grafana-dashboard-preview.png) |
+
 ### Phase 2 BLOCK Intelligence Example
 
 This output was generated from real ModelShield audit records using the release controller and historical analyzer:
