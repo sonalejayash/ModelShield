@@ -147,3 +147,35 @@ def test_blocked_audit_investigation_cites_failure_field(tmp_path: Path) -> None
     assert ["artifact_signature_valid"] in [
         finding["evidence_fields"] for finding in record["investigation"]["findings"]
     ]
+
+
+def test_investigation_cli_reads_existing_audit(tmp_path: Path) -> None:
+    audit = tmp_path / "audit.jsonl"
+    release = subprocess.run(
+        [
+            sys.executable,
+            "scripts/release.py",
+            "--model-version",
+            "scenario-v2",
+            "--output-dir",
+            str(tmp_path),
+            "--audit-path",
+            str(audit),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    investigation = subprocess.run(
+        [sys.executable, "scripts/investigate_release.py", str(audit)],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert release.returncode == 0, release.stderr
+    assert investigation.returncode == 0, investigation.stderr
+    report = json.loads(investigation.stdout)
+    assert report["decision"] == "PROMOTE"
+    assert report["advisory_only"] is True
+    assert report["findings"][0]["evidence_fields"]
