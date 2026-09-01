@@ -13,7 +13,7 @@ The deterministic policy engine is the final authority. Future AI release intell
 | Stage | Status | Evidence |
 |---|---|---|
 | Phase 0: foundation | Complete | Repository verifier, architecture, lifecycle, and threat model |
-| Phase 1: V1 golden path | Complete | Reproducible release command and `52` passing tests |
+| Phase 1: V1 golden path | Complete | Reproducible release command and `65` passing tests |
 | Phase 1.5: platform improvements | Complete | MLflow, Terraform, Grafana, SBOM, Conftest, and Scorecard integrations |
 | Phase 2: release intelligence | Started | Read-only, deterministic, schema-validated investigator contract |
 
@@ -194,7 +194,7 @@ flowchart TD
 
 ## Roadmap
 
-Phase 2 has started with a read-only investigator contract integrated into audit records and an optional model-backed explanation adapter. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
+Phase 2 has started with a read-only investigator contract integrated into audit records and covered by end-to-end release scenarios. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
 
 ## Development rule
 

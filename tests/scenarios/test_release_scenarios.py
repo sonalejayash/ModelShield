@@ -1,6 +1,8 @@
 import json
 from dataclasses import replace
 from pathlib import Path
+import subprocess
+import sys
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
@@ -104,3 +106,44 @@ def test_metadata_mismatch_is_blocked(tmp_path: Path) -> None:
 
     assert result.decision is Decision.BLOCK
     assert "metadata" in result.reasons[0]
+
+
+def test_golden_path_audit_contains_advisory_investigation(tmp_path: Path) -> None:
+    audit = tmp_path / "audit.jsonl"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "scripts/release.py",
+            "--model-version",
+            "scenario-v1",
+            "--output-dir",
+            str(tmp_path),
+            "--audit-path",
+            str(audit),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0, result.stderr
+    record = json.loads(audit.read_text(encoding="utf-8"))
+    assert record["decision"] == "PROMOTE"
+    assert record["investigation"]["decision"] == "PROMOTE"
+    assert record["investigation"]["advisory_only"] is True
+    assert record["investigation"]["findings"][0]["evidence_fields"]
+
+
+def test_blocked_audit_investigation_cites_failure_field(tmp_path: Path) -> None:
+    request = release_request(tmp_path)
+    invalid_metadata = replace(request.artifact_metadata, signature=b"invalid")
+    audit = tmp_path / "audit.jsonl"
+
+    result = ReleaseController().evaluate_and_audit(replace(request, artifact_metadata=invalid_metadata), audit)
+
+    record = json.loads(audit.read_text(encoding="utf-8"))
+    assert result.decision is Decision.BLOCK
+    assert record["investigation"]["advisory_only"] is True
+    assert ["artifact_signature_valid"] in [
+        finding["evidence_fields"] for finding in record["investigation"]["findings"]
+    ]
