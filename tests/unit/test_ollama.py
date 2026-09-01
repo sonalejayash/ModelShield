@@ -2,6 +2,7 @@ import json
 from typing import Any
 
 import pytest
+from urllib.error import URLError
 
 from intelligence.ollama import OllamaCompleter
 
@@ -38,3 +39,19 @@ def test_ollama_completer_posts_prompt_and_returns_text() -> None:
 def test_ollama_completer_rejects_missing_response() -> None:
     with pytest.raises(ValueError, match="generated text"):
         OllamaCompleter(transport=lambda *_args, **_kwargs: FakeResponse({}))("prompt")
+
+
+def test_ollama_completer_fails_closed_when_unavailable() -> None:
+    def transport(*_args: Any, **_kwargs: Any) -> FakeResponse:
+        raise URLError("connection refused")
+
+    with pytest.raises(ValueError, match="request failed"):
+        OllamaCompleter(transport=transport)("prompt")
+
+
+def test_ollama_completer_fails_closed_on_timeout() -> None:
+    def transport(*_args: Any, **_kwargs: Any) -> FakeResponse:
+        raise TimeoutError("timed out")
+
+    with pytest.raises(ValueError, match="request failed"):
+        OllamaCompleter(transport=transport)("prompt")

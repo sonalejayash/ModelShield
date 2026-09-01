@@ -9,14 +9,16 @@ ModelShield is a policy-driven ML release control plane. It evaluates model qual
 
 > No ML model reaches deployment unless its quality, security, provenance, and deployment policies pass.
 
-The deterministic policy engine is the final authority. Future AI release intelligence may investigate evidence and explain decisions, but it will never approve, deploy, override policy, or change access controls.
+The deterministic policy engine is the final release authority.
+
+The release-intelligence layer is advisory only. It investigates release evidence, correlates historical failures, and explains decisions. It cannot approve, deploy, override policy, or modify access controls.
 
 ## Project status
 
 | Stage | Status | Evidence |
 |---|---|---|
 | Phase 0: foundation | Complete | Repository verifier, architecture, lifecycle, and threat model |
-| Phase 1: V1 golden path | Complete | Reproducible release command and `71` passing tests |
+| Phase 1: V1 golden path | Complete | Reproducible release command and `77` passing tests |
 | Phase 1.5: platform improvements | Complete | MLflow, Terraform, Grafana, SBOM, Conftest, and Scorecard integrations |
 | Phase 2: release intelligence | Complete | Read-only investigation, historical intelligence, optional Ollama transport, and interview demo |
 
@@ -158,6 +160,37 @@ Demo complete
 
 See [docs/portfolio-evidence.md](docs/portfolio-evidence.md) for the latest captured terminal evidence.
 
+### Phase 2 BLOCK Intelligence Example
+
+This output was generated from real ModelShield audit records using the release controller and historical analyzer:
+
+```text
+Release: demo-v1
+Policy Decision: BLOCK
+
+Current Evidence
+  Critical vulnerabilities: 1
+  Quality: PASS
+  Drift: PASS
+  Signature: VALID
+  Provenance: VALID
+
+Historical Correlation
+  Previous security failures: 2
+  Quality trend: STABLE
+  Drift trend: INCREASING
+
+Investigation
+  Security gate blocked the release.
+  This is the third release with a critical vulnerability.
+
+AI Authority
+  ADVISORY ONLY
+
+Final Decision
+  BLOCK
+```
+
 Training metadata includes the dataset, random seed, test split, quality metrics, model version, artifact path, SHA-256 digest, signature, public key, source revision, and builder identity. Local runs use `source_revision=local`; GitHub Actions records `GITHUB_SHA`.
 
 ## API
@@ -226,19 +259,64 @@ python scripts/demo.py --model-version demo-v1
 
 ```mermaid
 flowchart TD
-  A[Train scikit-learn model] --> B[Persist artifact and metadata]
-  B --> C[SHA-256 and Ed25519 verification]
-  C --> D[Quality, drift, provenance, and scan evidence]
-  D --> E[Canonical ReleaseEvidence]
-  E --> F[Deterministic policy engine]
-  F --> G{Decision}
-  G -->|PROMOTE| H[Kubernetes deployment]
-  G -->|BLOCK| I[Audit and stop]
-  G -->|RETRAIN| J[Audit and recommend retraining]
-  E --> M[Read-only investigation]
-  M --> N[Advisory explanation and history]
-  H --> K[Prometheus monitoring]
-  K --> L[Rollback or escalation]
+  A[Training] --> B[Model Artifact]
+  B --> Q[Quality]
+  B --> D[Drift]
+  B --> S[Security]
+  B --> I[Integrity]
+  B --> P[Provenance]
+  Q --> E[ReleaseEvidence]
+  D --> E
+  S --> E
+  I --> E
+  P --> E
+  E --> F[Deterministic Policy Engine]
+  F --> G{Release Decision}
+  G -->|PROMOTE| H[Kubernetes]
+  G -->|BLOCK| X[Stop Deployment]
+  G -->|RETRAIN| R[Recommend Retraining]
+  H --> M[Monitoring]
+  M --> RB[Rollback]
+  E --> AE[Audit Evidence]
+  G --> AE
+  AE -. read-only .-> RI[Release Intelligence]
+  RI -. advisory .-> AI[AI Explanation]
+  AI -. cannot approve, deploy, or override .-> F
+```
+
+The dotted intelligence path is read-only and advisory. The deterministic policy engine controls `PROMOTE`, `BLOCK`, and `RETRAIN`.
+
+## Limitations
+
+- Model quality depends on representative evaluation data.
+- Runtime accuracy requires production ground-truth labels.
+- PSI indicates distribution shift; it does not by itself prove model degradation.
+- The demonstration uses a small scikit-learn model.
+- Ollama is optional and is not required for release safety.
+- `RETRAIN` is advisory and does not autonomously retrain or deploy a model.
+- Rollback requires a previous approved release to be available.
+- ModelShield is a portfolio/reference implementation, not a claim of production certification.
+
+## How to Demo ModelShield in an Interview
+
+1. Run healthy release.
+2. Show `PROMOTE`.
+3. Inject security or quality failure.
+4. Show `BLOCK`.
+5. Show audit evidence.
+6. Run drift scenario.
+7. Show `RETRAIN`.
+8. Demonstrate runtime degradation.
+9. Show `ROLLBACK`.
+10. Run release intelligence.
+11. Show historical correlation.
+12. Show AI explanation.
+13. Demonstrate that AI cannot override policy.
+
+The main demo is executable without cloud credentials:
+
+```bash
+python scripts/demo.py --model-version demo-v1
 ```
 
 ## Repository map

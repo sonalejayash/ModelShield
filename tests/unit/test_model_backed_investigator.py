@@ -3,7 +3,7 @@ import json
 import pytest
 
 from intelligence.adapter import ModelBackedInvestigator
-from intelligence.investigator import InvestigationReport
+from intelligence.investigator import InvestigationReport, ReleaseInvestigator
 from policy.engine import Decision, PolicyResult, ReleaseEvidence
 
 
@@ -70,6 +70,14 @@ def test_model_adapter_rejects_decision_override() -> None:
         ModelBackedInvestigator(complete).investigate(evidence(), result())
 
 
+def test_model_adapter_rejects_policy_version_override() -> None:
+    def complete(_: str) -> str:
+        return valid_response().replace("policy-v1", "policy-v2")
+
+    with pytest.raises(ValueError, match="cannot change"):
+        ModelBackedInvestigator(complete).investigate(evidence(), result())
+
+
 def test_model_adapter_rejects_non_advisory_output() -> None:
     def complete(_: str) -> str:
         return valid_response().replace("true", "false")
@@ -95,3 +103,22 @@ def test_model_adapter_treats_prompt_injection_as_data() -> None:
 def test_model_adapter_rejects_malformed_output() -> None:
     with pytest.raises(ValueError, match="valid investigation JSON"):
         ModelBackedInvestigator(lambda _: "not-json").investigate(evidence(), result())
+
+
+def test_model_adapter_rejects_tool_escalation_fields() -> None:
+    payload = json.loads(valid_response())
+    payload["tool_call"] = "kubectl apply -f deploy/kubernetes"
+
+    with pytest.raises(ValueError, match="valid investigation JSON"):
+        ModelBackedInvestigator(lambda _: json.dumps(payload)).investigate(evidence(), result())
+
+
+def test_ai_failure_does_not_change_policy_decision() -> None:
+    policy_result = result()
+    fallback = ReleaseInvestigator().investigate(evidence(), policy_result)
+
+    with pytest.raises(ValueError, match="valid investigation JSON"):
+        ModelBackedInvestigator(lambda _: "not-json").investigate(evidence(), policy_result)
+
+    assert policy_result.decision is Decision.PROMOTE
+    assert fallback.decision is policy_result.decision

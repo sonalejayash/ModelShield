@@ -51,6 +51,13 @@ def test_promotes_and_appends_audit_record(tmp_path: Path) -> None:
     assert record["decision"] == "PROMOTE"
     assert record["model_version"] == "v1"
     assert record["release_id"] == "release-test-1"
+    assert record["version"] == "v1"
+    assert record["artifact_sha256"] == record["evidence"]["artifact_sha256"]
+    assert record["quality"]["metrics"]["f1"] == 0.99
+    assert record["drift"]["status"] == "PASS"
+    assert record["security"]["critical_vulnerabilities"] == 0
+    assert record["integrity"]["artifact_signature_valid"] is True
+    assert record["provenance"]["provenance_valid"] is True
     assert record["evidence"]["artifact_sha256"]
     assert record["evidence"]["quality_metrics"]["f1"] == 0.99
     assert record["evidence"]["release_id"] == "release-test-1"

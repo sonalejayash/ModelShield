@@ -22,6 +22,14 @@ jobs:
         run: python scripts/verify_phase_0.py
       - name: Run tests
         run: python -m pytest -q
+      - name: Run golden path release workflow
+        run: python scripts/release.py --model-version v1
+      - name: Run release investigation workflow
+        run: python scripts/investigate_release.py artifacts/audit.jsonl
+      - name: Run historical intelligence workflow
+        run: python scripts/analyze_history.py artifacts/audit.jsonl
+      - name: Run interview demo workflow
+        run: python scripts/demo.py --model-version demo-v1
 
   container-security:
     runs-on: ubuntu-latest

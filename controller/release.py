@@ -99,7 +99,14 @@ class ReleaseController:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "release_id": request.release_id or f"{request.model_version}-{result.policy_version}",
             "model": request.model_name,
+            "version": request.model_version,
             "model_version": request.model_version,
+            "artifact_sha256": evidence.artifact_sha256,
+            "quality": _quality_record(evidence),
+            "drift": _drift_record(evidence),
+            "security": _security_record(evidence),
+            "integrity": _integrity_record(evidence),
+            "provenance": _provenance_record(evidence),
             "policy_version": result.policy_version,
             "decision": result.decision.value,
             "reasons": list(result.reasons),
@@ -117,3 +124,39 @@ def _evidence_record(evidence: ReleaseEvidence) -> dict[str, object]:
     if evidence.quality_metrics is not None:
         record["quality_metrics"] = asdict(evidence.quality_metrics)
     return record
+
+
+def _quality_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    return {
+        "passed": evidence.quality_passed,
+        "metrics": asdict(evidence.quality_metrics) if evidence.quality_metrics is not None else None,
+    }
+
+
+def _drift_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    return {"psi": evidence.drift_psi, "status": evidence.drift_status}
+
+
+def _security_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    return {
+        "critical_vulnerabilities": evidence.critical_vulnerabilities,
+        "high_vulnerabilities": evidence.high_vulnerabilities,
+        "dependency_scan_passed": evidence.dependency_scan_passed,
+        "container_scan_passed": evidence.container_scan_passed,
+        "dependency_scan_critical": evidence.dependency_scan_critical,
+        "container_scan_critical": evidence.container_scan_critical,
+    }
+
+
+def _integrity_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    return {
+        "artifact_path": evidence.artifact_path,
+        "artifact_sha256": evidence.artifact_sha256,
+        "artifact_integrity_valid": evidence.artifact_integrity_valid,
+        "artifact_signature_valid": evidence.artifact_signature_valid,
+        "metadata_consistent": evidence.metadata_consistent,
+    }
+
+
+def _provenance_record(evidence: ReleaseEvidence) -> dict[str, object]:
+    return {"provenance_valid": evidence.provenance_valid}
