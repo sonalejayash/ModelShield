@@ -1,5 +1,8 @@
 # ModelShield
 
+[![ModelShield CI](https://github.com/sonalejayash/ModelShield/actions/workflows/ci.yml/badge.svg)](https://github.com/sonalejayash/ModelShield/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://github.com/sonalejayash/ModelShield/actions/workflows/scorecard.yml/badge.svg)](https://github.com/sonalejayash/ModelShield/actions/workflows/scorecard.yml)
+
 ModelShield is a policy-driven ML release control plane. It evaluates model quality, data drift, artifact integrity, provenance, and supply-chain security before a model can be promoted to Kubernetes. It also exposes runtime metrics and supports controlled rollback.
 
 ## Product promise
@@ -16,6 +19,24 @@ The deterministic policy engine is the final authority. Future AI release intell
 | Phase 1: V1 golden path | Complete | Reproducible release command and `71` passing tests |
 | Phase 1.5: platform improvements | Complete | MLflow, Terraform, Grafana, SBOM, Conftest, and Scorecard integrations |
 | Phase 2: release intelligence | Complete | Read-only investigation, historical intelligence, optional Ollama transport, and interview demo |
+
+## Feature matrix
+
+| Area | Capability | Status |
+|---|---|---|
+| Model lifecycle | Reproducible scikit-learn training and evaluation | Complete |
+| Quality | Accuracy, precision, recall, F1, and policy thresholds | Complete |
+| Drift | PSI drift evaluation and `RETRAIN` decision path | Complete |
+| Integrity | SHA-256 artifact verification | Complete |
+| Signing | Ed25519 artifact signatures | Complete |
+| Provenance | Source revision and builder identity checks | Complete |
+| Security | Dependency/container scan evidence and Trivy CI gate | Complete |
+| Policy | Deterministic `PROMOTE`, `BLOCK`, and `RETRAIN` engine | Complete |
+| Audit | JSONL decision records with evidence and investigation | Complete |
+| Runtime | FastAPI service, Prometheus metrics, Docker, Kubernetes | Complete |
+| Rollback | Runtime state machine with cooldown and escalation | Complete |
+| Platform | Terraform, Grafana, SBOM, Conftest, Scorecard | Complete |
+| Intelligence | Read-only explanations, history analysis, optional Ollama | Complete |
 
 ## Golden path
 
@@ -125,6 +146,18 @@ python scripts/demo.py --model-version demo-v1
 
 The demo trains a model, evaluates the release gate, writes an audit record, regenerates the advisory investigation from that audit, and summarizes historical release evidence. The AI/intelligence layer remains read-only and cannot change the deterministic policy decision.
 
+Expected result:
+
+```text
+Policy: PROMOTE
+Release: PROMOTED
+advisory_only: true
+latest_decision: PROMOTE
+Demo complete
+```
+
+See [docs/portfolio-evidence.md](docs/portfolio-evidence.md) for the latest captured terminal evidence.
+
 Training metadata includes the dataset, random seed, test split, quality metrics, model version, artifact path, SHA-256 digest, signature, public key, source revision, and builder identity. Local runs use `source_revision=local`; GitHub Actions records `GITHUB_SHA`.
 
 ## API
@@ -171,21 +204,41 @@ conftest test deploy/kubernetes/deployment.yaml --policy policies/rego
 
 The CI workflow runs Python tests, repository verification, Docker build, SBOM generation, Trivy scanning, Terraform validation, and Conftest policy checks. The Scorecard workflow runs separately on pushes, weekly, and manually.
 
+Final local verification commands:
+
+```bash
+python -m pytest -q
+python scripts/verify_phase_0.py
+docker build --tag modelshield:ci .
+docker run --rm --volume "$PWD:/project" --workdir /project openpolicyagent/conftest@sha256:a38ba21668929a00dce2fe6ee43d1312228340bce5fd243f47dd0ce90516e558 test deploy/kubernetes/deployment.yaml --policy policies/rego
+```
+
+Clean-environment demonstration:
+
+```bash
+python -m venv .venv
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev]"
+python scripts/demo.py --model-version demo-v1
+```
+
 ## Architecture
 
 ```mermaid
 flowchart TD
-    A[Model training] --> B[Artifact and metadata]
-    B --> C[Integrity signature provenance]
-    C --> D[Quality drift and scan evidence]
-    D --> E[Canonical ReleaseEvidence]
-    E --> F[Deterministic policy engine]
-    F --> G{Decision}
-    G -->|PROMOTE| H[Kubernetes deployment]
-    G -->|BLOCK| I[Audit and stop]
-    G -->|RETRAIN| J[Audit and recommend retraining]
-    H --> K[Prometheus monitoring]
-    K --> L[Rollback or escalation]
+  A[Train scikit-learn model] --> B[Persist artifact and metadata]
+  B --> C[SHA-256 and Ed25519 verification]
+  C --> D[Quality, drift, provenance, and scan evidence]
+  D --> E[Canonical ReleaseEvidence]
+  E --> F[Deterministic policy engine]
+  F --> G{Decision}
+  G -->|PROMOTE| H[Kubernetes deployment]
+  G -->|BLOCK| I[Audit and stop]
+  G -->|RETRAIN| J[Audit and recommend retraining]
+  E --> M[Read-only investigation]
+  M --> N[Advisory explanation and history]
+  H --> K[Prometheus monitoring]
+  K --> L[Rollback or escalation]
 ```
 
 ## Repository map
