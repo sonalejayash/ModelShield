@@ -3,7 +3,17 @@
 [![ModelShield CI](https://github.com/sonalejayash/ModelShield/actions/workflows/ci.yml/badge.svg)](https://github.com/sonalejayash/ModelShield/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://github.com/sonalejayash/ModelShield/actions/workflows/scorecard.yml/badge.svg)](https://github.com/sonalejayash/ModelShield/actions/workflows/scorecard.yml)
 
-ModelShield is a policy-driven ML release control plane. It evaluates model quality, data drift, artifact integrity, provenance, and supply-chain security before a model can be promoted to Kubernetes. It also exposes runtime metrics and supports controlled rollback.
+ModelShield is a secure ML release-control plane for a practical MLOps problem: a model can pass training and still be unsafe to deploy. It demonstrates an evidence-driven workflow that **trains -> verifies -> evaluates -> decides -> audits -> explains**.
+
+**Technologies:** Python, FastAPI, scikit-learn, Docker, Kubernetes, Prometheus, Grafana, Terraform, Trivy, Conftest, OpenSSF Scorecard, MLflow adapter, and optional Ollama transport.
+
+This repository contains no company data or credentials. It is designed to be reproducible locally and understandable as a portfolio project.
+
+## Problem and solution
+
+**Problem:** ML model releases need more than accuracy checks. A release can have acceptable metrics while failing artifact integrity, provenance, security, drift, or runtime safety controls.
+
+**Solution:** ModelShield collects structured release evidence, applies deterministic policy gates, records an audit trail, and provides read-only release intelligence that explains decisions without controlling deployment.
 
 ## Product promise
 
@@ -13,163 +23,255 @@ The deterministic policy engine is the final release authority.
 
 The release-intelligence layer is advisory only. It investigates release evidence, correlates historical failures, and explains decisions. It cannot approve, deploy, override policy, or modify access controls.
 
-## Project status
+## What it demonstrates
 
-| Stage | Status | Evidence |
-|---|---|---|
-| Phase 0: foundation | Complete | Repository verifier, architecture, lifecycle, and threat model |
-| Phase 1: V1 golden path | Complete | Reproducible release command and `77` passing tests |
-| Phase 1.5: platform improvements | Complete | MLflow, Terraform, Grafana, SBOM, Conftest, and Scorecard integrations |
-| Phase 2: release intelligence | Complete | Read-only investigation, historical intelligence, optional Ollama transport, and interview demo |
+- Reproducible scikit-learn model training and evaluation.
+- Model artifact persistence with SHA-256 digest metadata.
+- Ed25519 artifact signing and signature verification.
+- Provenance, metadata consistency, and quality threshold checks.
+- PSI drift evaluation with a deterministic `RETRAIN` path.
+- Dependency and container scan evidence ingestion.
+- Deterministic release decisions: `PROMOTE`, `BLOCK`, or `RETRAIN`.
+- Complete JSONL audit records with evidence and advisory investigation.
+- FastAPI service with `/health`, `/v1/predict`, `/v1/releases/evaluate`, and `/metrics`.
+- Prometheus metrics and Grafana dashboard configuration.
+- Hardened Docker image and Kubernetes deployment manifests.
+- Runtime rollback state machine with cooldown and escalation behavior.
+- Terraform Kubernetes module, Conftest policies, SBOM generation, Trivy scan, and OpenSSF Scorecard workflow.
+- Read-only Phase 2 intelligence with prompt-injection and malformed-output safeguards.
 
-## Feature matrix
+## Architecture
 
-| Area | Capability | Status |
-|---|---|---|
-| Model lifecycle | Reproducible scikit-learn training and evaluation | Complete |
-| Quality | Accuracy, precision, recall, F1, and policy thresholds | Complete |
-| Drift | PSI drift evaluation and `RETRAIN` decision path | Complete |
-| Integrity | SHA-256 artifact verification | Complete |
-| Signing | Ed25519 artifact signatures | Complete |
-| Provenance | Source revision and builder identity checks | Complete |
-| Security | Dependency/container scan evidence and Trivy CI gate | Complete |
-| Policy | Deterministic `PROMOTE`, `BLOCK`, and `RETRAIN` engine | Complete |
-| Audit | JSONL decision records with evidence and investigation | Complete |
-| Runtime | FastAPI service, Prometheus metrics, Docker, Kubernetes | Complete |
-| Rollback | Runtime state machine with cooldown and escalation | Complete |
-| Platform | Terraform, Grafana, SBOM, Conftest, Scorecard | Complete |
-| Intelligence | Read-only explanations, history analysis, optional Ollama | Complete |
+```mermaid
+flowchart TB
+    subgraph Release[Release control path]
+        Train[Train scikit-learn model] --> Artifact[Model artifact and metadata]
+        Artifact --> Quality[Quality metrics]
+        Artifact --> Drift[PSI drift]
+        Artifact --> Security[Dependency and container scans]
+        Artifact --> Integrity[SHA-256 and Ed25519 signature]
+        Artifact --> Provenance[Provenance metadata]
+        Quality --> Evidence[Canonical ReleaseEvidence]
+        Drift --> Evidence
+        Security --> Evidence
+        Integrity --> Evidence
+        Provenance --> Evidence
+        Evidence --> Policy[Deterministic policy engine]
+        Policy --> Decision{Release decision}
+        Decision -->|PROMOTE| Kubernetes[Kubernetes deployment]
+        Decision -->|BLOCK| Stop[Stop deployment]
+        Decision -->|RETRAIN| Retrain[Recommend retraining]
+    end
 
-## Golden path
+    subgraph Runtime[Runtime path]
+        Kubernetes --> Metrics[Prometheus metrics]
+        Metrics --> Grafana[Grafana dashboard]
+        Metrics --> Rollback[Rollback state machine]
+    end
 
-```text
-Train model
-  -> persist artifact and metadata
-  -> calculate and verify SHA-256
-  -> verify Ed25519 signature and provenance
-  -> evaluate quality and PSI drift
-  -> consume dependency and container scan results
-  -> build ReleaseEvidence
-  -> apply deterministic policy
-  -> PROMOTE, BLOCK, or RETRAIN
-  -> append complete audit record
+    subgraph Intelligence[Read-only intelligence path]
+        Evidence --> Audit[Audit evidence]
+        Decision --> Audit
+        Audit -. read only .-> Investigator[Release intelligence]
+        Investigator -. advisory only .-> Explanation[AI / structured explanation]
+        Explanation -. cannot approve deploy or override .-> Policy
+    end
 ```
 
-Run it with one cross-platform command:
+The dotted intelligence path is read-only and advisory. The deterministic policy engine controls `PROMOTE`, `BLOCK`, and `RETRAIN`.
 
-```bash
-python scripts/release.py --model-version v1
-```
+## Repository layout
 
-Exit codes are deterministic:
+| Path | Purpose |
+| --- | --- |
+| `api/` | FastAPI application and HTTP endpoints |
+| `controller/` | Release orchestration and rollback state machine |
+| `model/` | Model service and reproducible training workflow |
+| `quality/` | Quality metrics and PSI drift evaluation |
+| `security/` | Artifact, provenance, and scan verification |
+| `policy/` | Policy configuration and deterministic decisions |
+| `intelligence/` | Read-only investigation, historical analysis, and Ollama adapter |
+| `observability/` | Shared Prometheus metrics |
+| `tracking/` | Optional MLflow release tracking adapter |
+| `policies/` | YAML thresholds and Rego security policies |
+| `deploy/kubernetes/` | Kubernetes Deployment, Service, and NetworkPolicy |
+| `deploy/terraform/` | Minimal Terraform Kubernetes module |
+| `deploy/grafana/` | Grafana dashboard and Prometheus datasource |
+| `scripts/` | Verification, training, release, investigation, history, and demo commands |
+| `docs/` | Architecture, threat model, lifecycle, and portfolio evidence |
+| `tests/` | Unit, integration, and end-to-end scenario tests |
 
-- `0`: `PROMOTE`
-- `1`: `BLOCK`
-- `2`: `RETRAIN` recommended; never deployed automatically
+## Prerequisites
 
-The command uses the built-in scikit-learn breast-cancer dataset, a seeded train/test split, a scaled logistic-regression pipeline, generated clean scan reports, and the configured model policy. It writes the model artifact, signed metadata, and JSONL audit record under `artifacts/`.
+- Python 3.11 or newer
+- Docker Desktop with the Linux engine running
+- `kubectl` for Kubernetes validation or deployment
+- Terraform 1.8 or newer for infrastructure validation
+- Optional: Grafana and Prometheus for dashboard rendering
+- Optional: Ollama for local model-backed explanations
 
-## Implemented capabilities
+## Quick start
 
-### Model workflow
+From the repository root:
 
-- Fixed dataset and reproducible loading
-- Seeded train/test split
-- scikit-learn scaled logistic-regression model
-- Joblib artifact persistence
-- Accuracy, precision, recall, and F1 evaluation
-- Model version and provenance metadata
-- SHA-256 artifact digest
-- Ed25519 signature and public key metadata
-- Actual-artifact re-evaluation
-- Metadata-versus-actual metric consistency checks
-
-### Release controls
-
-- Canonical `ReleaseEvidence` contract
-- Version-controlled YAML policy thresholds
-- Security precedence over quality and drift decisions
-- `PROMOTE`, `BLOCK`, and `RETRAIN` outcomes
-- Complete append-only JSONL audit records
-- Read-only investigation included in audit records
-- Evidence references for scan reports
-- Invalid signature, provenance, hash, and metadata rejection
-
-### Runtime platform
-
-- FastAPI health, prediction, release-evaluation, and metrics endpoints
-- Prometheus metrics for predictions, latency, errors, drift, release decisions, model version, and rollback events
-- Non-root Docker image
-- Kubernetes Deployment, Service, and NetworkPolicy
-- Resource requests and limits
-- Read-only root filesystem and dropped capabilities
-- Runtime rollback state machine with cooldown and escalation
-
-### Platform security
-
-- Optional MLflow release tracking adapter
-- Terraform Kubernetes module with locked provider selection
-- Grafana operational dashboard
-- CycloneDX container SBOM generation in CI
-- Conftest Kubernetes security policies
-- OpenSSF Scorecard SARIF workflow
-- Trivy high/critical container vulnerability gate
-
-## Local setup
-
-Requirements: Python 3.11+, Docker, and optionally Kubernetes/Terraform for deployment validation.
-
-```bash
+```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 python scripts/verify_phase_0.py
 python -m pytest -q
 ```
 
-## Model commands
+Run the full interview demo:
 
-```bash
+```powershell
+python scripts/demo.py --model-version demo-v1
+```
+
+The demo trains a model, evaluates the release gate, writes an audit record, regenerates the advisory investigation from that audit, and summarizes historical release evidence.
+
+## Golden-path workflow
+
+```powershell
 python scripts/train_model.py --output-dir artifacts --model-version v1
 python scripts/evaluate_model.py artifacts/model-v1.json
 python scripts/release.py --model-version v1
 python scripts/investigate_release.py artifacts/audit.jsonl
 python scripts/analyze_history.py artifacts/audit.jsonl
-python scripts/demo.py --model-version demo-v1
 ```
 
-## Interview demo
+Deterministic release exit codes:
 
-Run this command to demonstrate the project end to end:
+| Exit code | Meaning |
+| --- | --- |
+| `0` | `PROMOTE` |
+| `1` | `BLOCK` |
+| `2` | `RETRAIN`; no autonomous deployment |
 
-```bash
-python scripts/demo.py --model-version demo-v1
+Training metadata includes the dataset, random seed, test split, quality metrics, model version, artifact path, SHA-256 digest, signature, public key, source revision, and builder identity. Local runs use `source_revision=local`; GitHub Actions records `GITHUB_SHA`.
+
+## API workflow
+
+Start the service:
+
+```powershell
+uvicorn api.app:app --reload
 ```
 
-The demo trains a model, evaluates the release gate, writes an audit record, regenerates the advisory investigation from that audit, and summarizes historical release evidence. The AI/intelligence layer remains read-only and cannot change the deterministic policy decision.
+Endpoints:
 
-Expected result:
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /health` | Service health |
+| `POST /v1/predict` | Model prediction |
+| `POST /v1/releases/evaluate` | Deterministic release decision |
+| `GET /metrics` | Prometheus exposition format |
 
-```text
-Policy: PROMOTE
-Release: PROMOTED
-advisory_only: true
-latest_decision: PROMOTE
-Demo complete
+## Container and Kubernetes workflow
+
+```powershell
+docker build --tag modelshield:local .
+docker run --publish 8000:8000 modelshield:local
+kubectl apply -f deploy/kubernetes/
 ```
 
-See [docs/portfolio-evidence.md](docs/portfolio-evidence.md) for the latest captured terminal evidence.
+The image and manifests use a non-root user, health checks, readiness/liveness probes, resource requests and limits, dropped capabilities, a read-only root filesystem, Prometheus scrape annotations, and NetworkPolicy.
 
-## Evidence Screenshots
+## Observability workflow
 
-| Evidence | Screenshot |
-|---|---|
-| Golden-path release demo | ![Golden-path release demo](docs/assets/release-demo.png) |
-| BLOCK release intelligence | ![BLOCK release intelligence](docs/assets/block-investigation.png) |
-| Verification and security checks | ![Verification and security checks](docs/assets/verification-summary.png) |
-| Grafana dashboard preview | ![Grafana dashboard preview](docs/assets/grafana-dashboard-preview.png) |
+Import or provision the Grafana dashboard:
 
-### Phase 2 BLOCK Intelligence Example
+- Dashboard: [deploy/grafana/modelshield-dashboard.json](deploy/grafana/modelshield-dashboard.json)
+- Prometheus datasource: [deploy/grafana/datasource-prometheus.yml](deploy/grafana/datasource-prometheus.yml)
+
+Prometheus must scrape the ModelShield `/metrics` endpoint before Grafana shows live graphs. The dashboard includes request rate, latency, errors, model version, predictions, drift, release decisions, and rollback events.
+
+## Terraform workflow
+
+```powershell
+terraform -chdir=deploy/terraform init -backend=false
+terraform -chdir=deploy/terraform fmt -check
+terraform -chdir=deploy/terraform validate
+```
+
+The Terraform module manages the minimal Kubernetes demonstration resources and does not require cloud credentials.
+
+## Policy-as-code workflow
+
+```powershell
+docker run --rm --volume "$PWD:/project" --workdir /project openpolicyagent/conftest@sha256:a38ba21668929a00dce2fe6ee43d1312228340bce5fd243f47dd0ce90516e558 test deploy/kubernetes/deployment.yaml --policy policies/rego
+```
+
+Conftest validates non-root execution, security contexts, privilege escalation, read-only filesystem, and CPU/memory requests and limits.
+
+## Validation
+
+The CI workflow runs repository verification, Python tests, the full golden-path release workflow, release investigation, historical intelligence, interview demo, Docker build, SBOM generation, Trivy scanning, Terraform validation, and Conftest checks. The Scorecard workflow runs separately on push, schedule, and manual dispatch.
+
+| Check | Purpose |
+| --- | --- |
+| `python -m pytest -q` | Unit and scenario correctness |
+| `python scripts/verify_phase_0.py` | Repository contract validation |
+| `python scripts/release.py --model-version v1` | Golden-path release gate |
+| `python scripts/investigate_release.py artifacts/audit.jsonl` | Advisory investigation from audit |
+| `python scripts/analyze_history.py artifacts/audit.jsonl` | Historical release intelligence |
+| `python scripts/demo.py --model-version demo-v1` | Interview demo flow |
+| Docker build | Container packaging |
+| Trivy | High/critical vulnerability gate |
+| SBOM | CycloneDX container inventory |
+| Terraform | Infrastructure configuration validation |
+| Conftest | Kubernetes policy-as-code validation |
+| OpenSSF Scorecard | Repository security posture |
+
+Latest local validation passed with `79` automated tests, Phase 0 verification, Docker build, Conftest policy checks, Terraform validation, and clean-environment demo execution.
+
+## Security controls
+
+| Control | Risk addressed |
+| --- | --- |
+| Deterministic policy authority | AI or operator recommendation bypass |
+| Structured release evidence | Incomplete or ambiguous decision inputs |
+| SHA-256 artifact verification | Tampered model artifact |
+| Ed25519 signature verification | Unsigned or modified artifact |
+| Provenance checks | Missing source or builder identity |
+| Metadata consistency check | Recorded metrics disagreeing with actual evaluation |
+| Trivy scan gate | Known high/critical vulnerabilities |
+| Conftest policies | Unsafe Kubernetes configuration |
+| Non-root container and dropped capabilities | Container privilege escalation |
+| Read-only root filesystem | Runtime mutation |
+| NetworkPolicy | Unnecessary network access |
+| Schema-validated intelligence output | Malformed or manipulative AI responses |
+| Prompt-injection safeguards | Malicious evidence treated as instructions |
+| Optional Ollama timeout/fail-closed handling | AI availability affecting release safety |
+
+Details are in [docs/threat-model.md](docs/threat-model.md).
+
+## Evidence
+
+| Area | Evidence |
+| --- | --- |
+| CI/CD | [GitHub Actions workflow](.github/workflows/ci.yml) |
+| Golden path | [Release demo screenshot](docs/assets/release-demo.png) |
+| BLOCK decision | [BLOCK investigation screenshot](docs/assets/block-investigation.png) |
+| Validation | [Verification screenshot](docs/assets/verification-summary.png) |
+| Grafana | [Dashboard preview](docs/assets/grafana-dashboard-preview.png) and [dashboard JSON](deploy/grafana/modelshield-dashboard.json) |
+| Kubernetes | [Deployment manifest](deploy/kubernetes/deployment.yaml) and [Conftest policies](policies/rego/kubernetes_security.rego) |
+| Terraform | [Terraform module](deploy/terraform/) |
+| Threat model | [AI and release security threat model](docs/threat-model.md) |
+| Portfolio appendix | [Portfolio evidence](docs/portfolio-evidence.md) |
+
+## Evidence screenshots
+
+| Golden-path release demo | BLOCK release intelligence |
+| --- | --- |
+| ![Golden-path release demo](docs/assets/release-demo.png) | ![BLOCK release intelligence](docs/assets/block-investigation.png) |
+
+| Verification and security checks | Grafana dashboard preview |
+| --- | --- |
+| ![Verification and security checks](docs/assets/verification-summary.png) | ![Grafana dashboard preview](docs/assets/grafana-dashboard-preview.png) |
+
+## Phase 2 BLOCK intelligence example
 
 This output was generated from real ModelShield audit records using the release controller and historical analyzer:
 
@@ -200,157 +302,50 @@ Final Decision
   BLOCK
 ```
 
-Training metadata includes the dataset, random seed, test split, quality metrics, model version, artifact path, SHA-256 digest, signature, public key, source revision, and builder identity. Local runs use `source_revision=local`; GitHub Actions records `GITHUB_SHA`.
+## Portfolio demo
 
-## API
+Run the evidence tour:
 
-Start the service:
-
-```bash
-uvicorn api.app:app --reload
-```
-
-Endpoints:
-
-- `GET /health`: service health
-- `POST /v1/predict`: model prediction
-- `POST /v1/releases/evaluate`: deterministic release decision
-- `GET /metrics`: Prometheus exposition format
-
-## Container and Kubernetes
-
-```bash
-docker build --tag modelshield:local .
-docker run --publish 8000:8000 modelshield:local
-kubectl apply -f deploy/kubernetes/
-```
-
-The container runs as a non-root user and includes a health check. Kubernetes adds two replicas, readiness and liveness probes, resource limits, a restrictive NetworkPolicy, a read-only filesystem, dropped capabilities, and Prometheus scrape annotations.
-
-## Platform validation
-
-Terraform validation:
-
-```bash
-cd deploy/terraform
-terraform init -backend=false
-terraform fmt -check
-terraform validate
-```
-
-Conftest validation:
-
-```bash
-conftest test deploy/kubernetes/deployment.yaml --policy policies/rego
-```
-
-Grafana dashboard:
-
-- Import [deploy/grafana/modelshield-dashboard.json](deploy/grafana/modelshield-dashboard.json), or provision it with Grafana.
-- Provision [deploy/grafana/datasource-prometheus.yml](deploy/grafana/datasource-prometheus.yml) when running Grafana with Prometheus.
-- Ensure Prometheus scrapes the ModelShield `/metrics` endpoint before expecting live graphs.
-
-The CI workflow runs Python tests, repository verification, Docker build, SBOM generation, Trivy scanning, Terraform validation, and Conftest policy checks. The Scorecard workflow runs separately on pushes, weekly, and manually.
-
-Final local verification commands:
-
-```bash
-python -m pytest -q
-python scripts/verify_phase_0.py
-docker build --tag modelshield:ci .
-docker run --rm --volume "$PWD:/project" --workdir /project openpolicyagent/conftest@sha256:a38ba21668929a00dce2fe6ee43d1312228340bce5fd243f47dd0ce90516e558 test deploy/kubernetes/deployment.yaml --policy policies/rego
-```
-
-Clean-environment demonstration:
-
-```bash
-python -m venv .venv
-python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
+```powershell
 python scripts/demo.py --model-version demo-v1
 ```
 
-## Architecture
+Suggested interview flow:
 
-```mermaid
-flowchart TD
-  A[Training] --> B[Model Artifact]
-  B --> Q[Quality]
-  B --> D[Drift]
-  B --> S[Security]
-  B --> I[Integrity]
-  B --> P[Provenance]
-  Q --> E[ReleaseEvidence]
-  D --> E
-  S --> E
-  I --> E
-  P --> E
-  E --> F[Deterministic Policy Engine]
-  F --> G{Release Decision}
-  G -->|PROMOTE| H[Kubernetes]
-  G -->|BLOCK| X[Stop Deployment]
-  G -->|RETRAIN| R[Recommend Retraining]
-  H --> M[Monitoring]
-  M --> RB[Rollback]
-  E --> AE[Audit Evidence]
-  G --> AE
-  AE -. read-only .-> RI[Release Intelligence]
-  RI -. advisory .-> AI[AI Explanation]
-  AI -. cannot approve, deploy, or override .-> F
-```
+1. Run a healthy release and show `PROMOTE`.
+2. Explain that security failures, invalid signatures, invalid provenance, metadata mismatch, and critical vulnerabilities produce `BLOCK`.
+3. Show severe drift produces `RETRAIN` without autonomous deployment.
+4. Show rollback tests for runtime degradation and recovery.
+5. Open the audit record and show evidence, reasons, and investigation.
+6. Run release intelligence and historical analysis.
+7. Point out that AI is advisory only and cannot override the deterministic policy engine.
 
-The dotted intelligence path is read-only and advisory. The deterministic policy engine controls `PROMOTE`, `BLOCK`, and `RETRAIN`.
+The entire demo works without cloud credentials.
 
 ## Limitations
 
 - Model quality depends on representative evaluation data.
 - Runtime accuracy requires production ground-truth labels.
 - PSI indicates distribution shift; it does not by itself prove model degradation.
-- The demonstration uses a small scikit-learn model.
+- The demonstration uses a small scikit-learn model and built-in dataset.
 - Ollama is optional and is not required for release safety.
 - `RETRAIN` is advisory and does not autonomously retrain or deploy a model.
 - Rollback requires a previous approved release to be available.
+- Grafana shows live data only after Prometheus scrapes `/metrics` and traffic is generated.
 - ModelShield is a portfolio/reference implementation, not a claim of production certification.
 
-## How to Demo ModelShield in an Interview
+## Production evolution
 
-1. Run healthy release.
-2. Show `PROMOTE`.
-3. Inject security or quality failure.
-4. Show `BLOCK`.
-5. Show audit evidence.
-6. Run drift scenario.
-7. Show `RETRAIN`.
-8. Demonstrate runtime degradation.
-9. Show `ROLLBACK`.
-10. Run release intelligence.
-11. Show historical correlation.
-12. Show AI explanation.
-13. Demonstrate that AI cannot override policy.
+If this system moved toward production, the next steps would be OCI registry integration, external secret management, signed provenance attestations, managed Kubernetes, progressive delivery, Alertmanager/on-call workflows, SLO/error-budget release gates, centralized logging, and real production ground-truth feedback loops.
 
-The main demo is executable without cloud credentials:
+## Completed milestones
 
-```bash
-python scripts/demo.py --model-version demo-v1
-```
+- [x] Phase 0: Foundation, architecture, lifecycle, threat model, and repository verifier
+- [x] Phase 1: V1 golden path, policy engine, model workflow, audit records, API, Docker, Kubernetes, metrics, rollback, and CI
+- [x] Phase 1.5: MLflow adapter, Terraform, Grafana, SBOM, Conftest, Trivy, and OpenSSF Scorecard
+- [x] Phase 2: Read-only release intelligence, historical analysis, optional Ollama transport, AI safety tests, and interview demo
+- [x] Final portfolio polish: README cleanup, screenshots, evidence appendix, feature matrix, and verification summary
 
-## Repository map
+## Development rule
 
-- `model/`: model service and reproducible training workflow
-- `quality/`: quality metrics and PSI drift evaluation
-- `security/`: artifact, provenance, and scan verification
-- `policy/`: policy configuration and deterministic decisions
-- `controller/`: release orchestration and rollback state machine
-- `api/`: FastAPI application
-- `observability/`: shared Prometheus metrics
-- `tracking/`: optional MLflow adapter
-- `policies/`: YAML thresholds and Rego security policies
-- `deploy/kubernetes/`: Kubernetes manifests
-- `deploy/terraform/`: minimal Terraform Kubernetes module
-- `deploy/grafana/`: operational dashboard JSON
-- `scripts/`: verification, training, evaluation, and release commands
-- `tests/`: unit, integration, and scenario tests
-
-## Roadmap
-
-Phase 2 is complete with a read-only investigator contract integrated into audit records and covered by end-to-end release scenarios. `scripts/investigate_release.py` can regenerate an advisory investigation report from an existing audit log, and `scripts/analyze_history.py` summarizes historical release decisions, recurring reasons, quality trends, and drift trends. Its output is structured, evidence-cited, schema-validated, and advisory, with missing and contradictory evidence flagged explicitly. An optional local Ollama transport is timeout-bound and receives structured evidence only. The intelligence layer must match the deterministic decision, has no unrestricted shell or Kubernetes access, and is not part of the final release authority.
+Every phase must be implemented, tested, verified, documented, and published before the next phase begins. The README must be updated whenever a phase is completed. No production capability is claimed without executable evidence.
