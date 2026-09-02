@@ -89,7 +89,7 @@ Demo complete
 | Golden-path release demo | ![Golden-path release demo](assets/release-demo.png) |
 | BLOCK release intelligence | ![BLOCK release intelligence](assets/block-investigation.png) |
 | Verification and security checks | ![Verification and security checks](assets/verification-summary.png) |
-| Grafana dashboard preview | ![Grafana dashboard preview](assets/grafana-dashboard-preview.png) |
+| Live Grafana dashboard | ![Live Grafana dashboard](assets/grafana-live-dashboard.png) |
 
 ### PROMOTE
 
@@ -143,7 +143,9 @@ total_releases: 1
 
 ### Grafana
 
-Evidence: [deploy/grafana/modelshield-dashboard.json](../deploy/grafana/modelshield-dashboard.json) parses successfully and contains panels for request rate, latency, errors, model version, predictions, drift, release decisions, and rollback events.
+![Live ModelShield Grafana dashboard](assets/grafana-live-dashboard.png)
+
+The local Docker Compose monitoring stack was started with the ModelShield API, Prometheus, and Grafana. Prometheus reported the ModelShield target as `up` and collected 20 predictions, 5 `PROMOTE` decisions, and 3 `BLOCK` decisions before the capture. The live dashboard shows request rate, p95 latency, zero request errors, model version, predictions, drift PSI, release decisions, and rollback events.
 
 ### Kubernetes
 

@@ -1,0 +1,34 @@
+services:
+  modelshield:
+    build:
+      context: ../..
+    image: modelshield:monitoring
+    ports:
+      - "18000:8000"
+
+  prometheus:
+    image: prom/prometheus:v3.9.1
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=2h"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "19090:9090"
+    depends_on:
+      - modelshield
+
+  grafana:
+    image: grafana/grafana:12.3.1
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: modelshield-demo
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ../grafana/datasource-prometheus.yml:/etc/grafana/provisioning/datasources/prometheus.yml:ro
+      - ./dashboard-provider.yml:/etc/grafana/provisioning/dashboards/modelshield.yml:ro
+      - ../grafana/modelshield-dashboard.json:/var/lib/grafana/dashboards/modelshield-dashboard.json:ro
+    ports:
+      - "13000:3000"
+    depends_on:
+      - prometheus

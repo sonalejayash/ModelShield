@@ -187,6 +187,19 @@ Import or provision the Grafana dashboard:
 
 Prometheus must scrape the ModelShield `/metrics` endpoint before Grafana shows live graphs. The dashboard includes request rate, latency, errors, model version, predictions, drift, release decisions, and rollback events.
 
+Run the complete local monitoring stack:
+
+```powershell
+docker compose -f deploy/monitoring/docker-compose.yml up --build --detach
+```
+
+- ModelShield API: `http://127.0.0.1:18000`
+- Prometheus: `http://127.0.0.1:19090`
+- Grafana: `http://127.0.0.1:13000`
+- Grafana demo login: `admin` / `modelshield-demo`
+
+Generate traffic with `/v1/predict` and `/v1/releases/evaluate`, then open the provisioned `ModelShield Runtime` dashboard. These credentials are only for the disposable local demonstration.
+
 ## Terraform workflow
 
 ```powershell
@@ -255,7 +268,7 @@ Details are in [docs/threat-model.md](docs/threat-model.md).
 | Golden path | [Release demo screenshot](docs/assets/release-demo.png) |
 | BLOCK decision | [BLOCK investigation screenshot](docs/assets/block-investigation.png) |
 | Validation | [Verification screenshot](docs/assets/verification-summary.png) |
-| Grafana | [Dashboard preview](docs/assets/grafana-dashboard-preview.png) and [dashboard JSON](deploy/grafana/modelshield-dashboard.json) |
+| Grafana | [Live Grafana capture](docs/assets/grafana-live-dashboard.png) and [dashboard JSON](deploy/grafana/modelshield-dashboard.json) |
 | Kubernetes | [Deployment manifest](deploy/kubernetes/deployment.yaml) and [Conftest policies](policies/rego/kubernetes_security.rego) |
 | Terraform | [Terraform module](deploy/terraform/) |
 | Threat model | [AI and release security threat model](docs/threat-model.md) |
@@ -267,9 +280,9 @@ Details are in [docs/threat-model.md](docs/threat-model.md).
 | --- | --- |
 | ![Golden-path release demo](docs/assets/release-demo.png) | ![BLOCK release intelligence](docs/assets/block-investigation.png) |
 
-| Verification and security checks | Grafana dashboard preview |
+| Verification and security checks | Live Grafana dashboard |
 | --- | --- |
-| ![Verification and security checks](docs/assets/verification-summary.png) | ![Grafana dashboard preview](docs/assets/grafana-dashboard-preview.png) |
+| ![Verification and security checks](docs/assets/verification-summary.png) | ![Live Grafana dashboard](docs/assets/grafana-live-dashboard.png) |
 
 ## Phase 2 BLOCK intelligence example
 
